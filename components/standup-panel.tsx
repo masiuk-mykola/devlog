@@ -18,8 +18,9 @@ export function StandupPanel() {
 
   const copy = () => {
     if (!final?.markdown) return;
-    navigator.clipboard.writeText(final.markdown);
-    toast.success("Copied to clipboard");
+    navigator.clipboard.writeText(final.markdown)
+      .then(() => toast.success("Copied to clipboard"))
+      .catch(() => toast.error("Copy failed"));
   };
 
   return (

@@ -16,7 +16,15 @@ export async function POST(req: NextRequest) {
       { status: 503 },
     );
   }
-  const body = BodySchema.parse(await req.json().catch(() => ({})));
+  let body: z.infer<typeof BodySchema>;
+  try {
+    body = BodySchema.parse(await req.json().catch(() => ({})));
+  } catch (e) {
+    return NextResponse.json(
+      { error: { code: "bad_request", message: (e as Error).message } },
+      { status: 400 },
+    );
+  }
   const sinceHours = body.sinceHours ?? 24;
   const sinceMs = Date.now() - sinceHours * 3_600_000;
 
