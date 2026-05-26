@@ -2,6 +2,22 @@
 
 Honest log of how this project was built with Claude Code. Newest entry on top.
 
+## 2026-05-26 — Task 14: Standup digest + final polish
+
+- `src/agents/standup.ts` defines three tools (`list_tasks`, `list_notes`, `get_completed_since`) + `STANDUP_SYSTEM` + `extractMarkdown` JSON-block parser.
+- `app/api/agents/standup/route.ts` accepts `{sinceHours?}` (defaults 24, max 14d), computes `sinceMs` server-side, streams via SSE.
+- `components/standup-panel.tsx` mirrors the prioritizer panel patterns (cancel-on-close, transcript view) and adds a Since selector (24h/3d/7d) + Copy-to-clipboard button.
+- Mounted in the header next to "Prioritize my day".
+- README rewritten with architecture overview, storage limits, AI agent rundown, and the explicit list of deliberate cuts (auth, kanban, UI tests, 4th agent variant, deploy config).
+
+## Reflection — how Claude shaped this build
+
+- The brainstorming → spec → plan → execute workflow paid off. Every implementation task had verbatim code in the plan; the spec/quality review subagents caught two HIGH bugs in the decomposer clarification flow that would have shipped silently otherwise.
+- Hand-wrote the agent runner (`src/agents/runner.ts`) instead of using the SDK's beta `toolRunner` so proposal tools can short-circuit the loop and surface their input as an SSE event for client-side confirmation. Three TDD tests pin that behaviour.
+- The custom SSE event taxonomy (`text_delta | tool_use | tool_result | needs_clarification | final | error | done`) is shared by all three agents and rendered by a single `<AgentTranscript>` component.
+- Used the new shadcn "base-nova" preset (`@base-ui/react` under the hood) — the scaffold automatically generated the right primitives; no `asChild` → `render` rewrites were needed beyond the create-task dialog.
+- Cuts I'm comfortable with: no UI tests, no fourth agent variant, no Loom. Time better spent on the depth of the three agents than the breadth of features.
+
 ## 2026-05-26 — Task 13: Decomposer agent with clarification round-trip
 
 - `src/agents/decompose.ts` defines three tools: `get_task` (read-only), `ask_clarification` (proposal — questions echoed back to client without continuing the LLM loop), `propose_subtasks` (proposal — editable subtask list).
