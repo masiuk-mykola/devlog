@@ -14,7 +14,7 @@ type FinalShape = {
 
 export function PrioritizePanel({ onPickTask }: { onPickTask?: (id: string) => void }) {
   const [open, setOpen] = useState(false);
-  const { events, status, start } = useAgentStream();
+  const { events, status, start, cancel } = useAgentStream();
   const final = events.find((e) => e.event === "final")?.data as FinalShape | undefined;
 
   const launch = () => { setOpen(true); start("/api/agents/prioritize", {}); };
@@ -22,7 +22,7 @@ export function PrioritizePanel({ onPickTask }: { onPickTask?: (id: string) => v
   return (
     <>
       <Button size="sm" variant="outline" onClick={launch}>Prioritize my day</Button>
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={(v) => { if (!v) cancel(); setOpen(v); }}>
         <DialogContent className="max-w-2xl">
           <DialogHeader><DialogTitle>What to start with today</DialogTitle></DialogHeader>
           <ScrollArea className="max-h-[70vh]">
