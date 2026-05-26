@@ -152,7 +152,7 @@ export function createRepository(db: Database): Repository {
         completed_at:
           input.status === "done"
             ? existing.completed_at ?? now()
-            : input.status && input.status !== "done"
+            : input.status
               ? null
               : existing.completed_at,
       };
