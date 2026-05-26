@@ -2,6 +2,13 @@
 
 Honest log of how this project was built with Claude Code. Newest entry on top.
 
+## 2026-05-26 — Task 13: Decomposer agent with clarification round-trip
+
+- `src/agents/decompose.ts` defines three tools: `get_task` (read-only), `ask_clarification` (proposal — questions echoed back to client without continuing the LLM loop), `propose_subtasks` (proposal — editable subtask list).
+- `app/api/agents/decompose/route.ts` accepts `{taskId, clarificationAnswers?}`. Two paths: first invocation → agent may either propose subtasks immediately or emit `needs_clarification`; second invocation (with answers populated) → agent jumps straight to propose_subtasks. The 503 / 400 paths return JSON; the streaming path returns SSE.
+- `components/decompose-dialog.tsx` is fully wired: shows the transcript live, renders clarifying questions as an inline form, then renders proposed subtasks as an editable checklist (title input + priority select + remove button), then commits them as subtasks via `useCreateTask` with `parentId` set. Cancel-on-close pattern reused from Task 12.
+- Real agent demo requires `ANTHROPIC_API_KEY` in `.env`. Without it, the dialog surfaces the 503 inline.
+
 ## 2026-05-26 — Task 12: Prioritizer agent (end-to-end)
 
 - `src/agents/prioritize.ts` defines the system prompt + two tools (`list_tasks`, `get_task_age`) + `extractFinalJson` regex helper.
