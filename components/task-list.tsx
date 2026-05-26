@@ -11,11 +11,17 @@ import { TaskDrawer } from "./task-drawer";
 type StatusFilter = "all" | "todo" | "in_progress" | "done";
 type SortKey = "priority" | "newest" | "oldest";
 
-export function TaskList() {
+export function TaskList({
+  externalOpenTaskId,
+  onExternalClose,
+}: { externalOpenTaskId?: string | null; onExternalClose?: () => void } = {}) {
   const [status, setStatus] = useState<StatusFilter>("all");
   const [sort, setSort] = useState<SortKey>("newest");
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
   const { data: tasks, isLoading } = useTasks({ status, sort });
+
+  const effectiveOpenId = externalOpenTaskId ?? openTaskId;
+  const handleClose = () => { setOpenTaskId(null); onExternalClose?.(); };
 
   return (
     <>
@@ -55,7 +61,7 @@ export function TaskList() {
         </div>
       )}
 
-      <TaskDrawer taskId={openTaskId} onClose={() => setOpenTaskId(null)} />
+      <TaskDrawer taskId={effectiveOpenId} onClose={handleClose} />
     </>
   );
 }

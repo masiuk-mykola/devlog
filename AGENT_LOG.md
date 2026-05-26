@@ -2,6 +2,15 @@
 
 Honest log of how this project was built with Claude Code. Newest entry on top.
 
+## 2026-05-26 — Task 12: Prioritizer agent (end-to-end)
+
+- `src/agents/prioritize.ts` defines the system prompt + two tools (`list_tasks`, `get_task_age`) + `extractFinalJson` regex helper.
+- `app/api/agents/prioritize/route.ts` streams SSE via `ReadableStream`; returns HTTP 503 with `ai_not_configured` if `ANTHROPIC_API_KEY` is absent (verified via smoke test).
+- `src/hooks/use-agent-stream.ts` — generic SSE consumer (parses `event:`/`data:` frames, handles AbortController, tracks status). Reused by all three agents.
+- `components/agent-transcript.tsx` — shared transcript view rendering tool-call pills + streaming text. Used by all three agent panels.
+- `components/prioritize-panel.tsx` — modal that streams the agent, renders "Start here" + ranked list; clicking a task opens its drawer via lifted state.
+- `app/page.tsx` is now a client wrapper that holds the open-task-id and forwards it to TaskList via `externalOpenTaskId`. TaskList accepts the controlled-open prop without losing its internal click-row-to-open behaviour.
+
 ## 2026-05-26 — Task 11: Anthropic client, SSE, runner (TDD)
 
 - `src/agents/runner.ts` is a hand-written tool-use loop on top of `@anthropic-ai/sdk` — NOT the SDK's `client.beta.messages.toolRunner`. Why: needed to short-circuit on "proposal" tools (`ask_clarification`, `propose_subtasks`) that surface their input to the client without continuing the LLM round. Wrote the test (3 cases: complete, proposal short-circuit, step cap) first; ran to confirm failure; implemented; all 3 pass + Task 5's 8 still green.
