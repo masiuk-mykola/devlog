@@ -2,6 +2,11 @@
 
 Honest log of how this project was built with Claude Code. Newest entry on top.
 
+## 2026-05-26 — Task 3: DB + migrations
+
+- `src/db/client.ts` and `src/db/migrations.ts` written from spec — synchronous better-sqlite3 client with WAL journal, foreign keys on, and idempotent `CREATE TABLE IF NOT EXISTS` migrations that run on first `getDb()` call. No separate migration command — schema bootstraps on demand.
+- Verified both tables exist via a one-shot `tsx` import.
+
 ## 2026-05-26 — Task 2: shadcn/ui
 
 - shadcn CLI generated everything in `components/ui/` (button, input, textarea, label, select, badge, sheet, dialog, dropdown-menu, tabs, card, sonner, separator, scroll-area, skeleton, tooltip). None of those files are hand-edited.
