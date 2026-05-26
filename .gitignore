@@ -41,11 +41,9 @@ yarn-error.log*
 next-env.d.ts
 
 # DevLog
-.env
-.env.local
+HW AI (*).pdf
 data/
 *.db
 *.db-journal
 *.db-wal
 *.db-shm
-coverage/
