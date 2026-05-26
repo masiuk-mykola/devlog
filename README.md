@@ -1,6 +1,6 @@
 # DevLog
 
-Single-user task tracker for engineering teams with embedded AI agents. Built as a take-home assignment — see `HW AI (2).pdf`.
+Single-user task tracker for engineering teams with embedded AI agents. Built as a take-home assignment.
 
 ## Quick start
 
