@@ -9,7 +9,7 @@ export const DECOMPOSE_SYSTEM = `You are the DevLog task decomposer. You receive
 3. Otherwise call propose_subtasks with 3-6 concrete subtasks. Each subtask has a title (imperative, specific), short description, and priority. STOP after this call.
 Never propose subtasks AND ask clarification in the same turn. Pick one branch.`;
 
-export function buildDecomposeTools(_taskId: string): AgentTool<unknown>[] {
+export function buildDecomposeTools(): AgentTool<unknown>[] {
   const repo = createRepository(getDb());
 
   const getTask: AgentTool<{ id: string }> = {

@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
           model: MODEL,
           system: DECOMPOSE_SYSTEM,
           user: userMessage,
-          tools: buildDecomposeTools(taskId),
+          tools: buildDecomposeTools(),
           maxIterations: 6,
           emit,
         });
