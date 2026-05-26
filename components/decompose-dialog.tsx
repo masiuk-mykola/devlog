@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -37,20 +37,23 @@ export function DecomposeDialog({
   const { events, status, start, cancel } = useAgentStream();
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [items, setItems] = useState<Subtask[] | null>(null);
+  const hasStartedRef = useRef(false);
   const createTask = useCreateTask();
 
   const clarifyEvent = events.find((e) => e.event === "needs_clarification");
   const finalEvent = events.find((e) => e.event === "final");
 
   useEffect(() => {
-    if (open && taskId && events.length === 0) {
+    if (open && taskId && !hasStartedRef.current) {
+      hasStartedRef.current = true;
       start("/api/agents/decompose", { taskId });
     }
     if (!open) {
+      hasStartedRef.current = false;
       setAnswers({});
       setItems(null);
     }
-  }, [open, taskId, events.length, start]);
+  }, [open, taskId, start]);
 
   useEffect(() => {
     if (finalEvent) {
@@ -171,7 +174,7 @@ export function DecomposeDialog({
           )}
         </ScrollArea>
         <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+          <Button variant="ghost" onClick={() => { cancel(); onOpenChange(false); }}>
             Cancel
           </Button>
           {items && (
