@@ -2,6 +2,11 @@
 
 Honest log of how this project was built with Claude Code. Newest entry on top.
 
+## 2026-05-26 — Task 7: Seed script
+
+- `src/db/seed.ts` populates 6 realistic engineering tasks (flaky CI, refactor billing, postmortem, Node bump, dark mode, slow queries). Mix of statuses and priorities so the prioritizer + standup agents have something to chew on later.
+- Runnable via `npm run seed` (already wired in Task 1's package.json scripts as `tsx src/db/seed.ts`).
+
 ## 2026-05-26 — Task 6: CRUD route handlers
 
 - `src/lib/api-error.ts` provides `withErrorHandler` + `ApiHttpError`. Zod errors map to 400 with flattened details; `ApiHttpError` lets handlers throw structured 4xx (used for 404s); unknown errors → 500 + `console.error`.
