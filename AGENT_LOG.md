@@ -2,6 +2,11 @@
 
 Honest log of how this project was built with Claude Code. Newest entry on top.
 
+## 2026-05-26 — Task 4: Zod schemas
+
+- `src/schemas/task.ts` defines `StatusEnum`, `PriorityEnum`, `TaskSchema`, `CreateTaskSchema`, `UpdateTaskSchema`, `NoteSchema`, `CreateNoteSchema`. These are the **API-facing shapes** — timestamps are ISO 8601 strings, not unix ms. Conversion lives in the repository layer (Task 5).
+- One source of truth — these schemas are reused by Route Handlers (request validation) and by agent tool definitions (Task 11+).
+
 ## 2026-05-26 — Task 3: DB + migrations
 
 - `src/db/client.ts` and `src/db/migrations.ts` written from spec — synchronous better-sqlite3 client with WAL journal, foreign keys on, and idempotent `CREATE TABLE IF NOT EXISTS` migrations that run on first `getDb()` call. No separate migration command — schema bootstraps on demand.
