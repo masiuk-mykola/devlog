@@ -1,34 +1,34 @@
-"use client";
-import { useEffect, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
+'use client';
+import { useEffect, useRef, useState } from 'react';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
+  DialogTitle
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useAgentStream } from "@/src/hooks/use-agent-stream";
-import { useCreateTask } from "@/src/hooks/use-tasks";
-import type { Priority } from "@/src/schemas/task";
-import { AgentTranscript } from "./agent-transcript";
+  SelectValue
+} from '@/components/ui/select';
+import { useAgentStream } from '@/src/hooks/use-agent-stream';
+import { useCreateTask } from '@/src/hooks/use-tasks';
+import type { Priority } from '@/src/schemas/task';
+import { AgentTranscript } from './agent-transcript';
 
 type Subtask = { title: string; description?: string; priority: Priority };
 
 export function DecomposeDialog({
   open,
   onOpenChange,
-  taskId,
+  taskId
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -40,16 +40,17 @@ export function DecomposeDialog({
   const hasStartedRef = useRef(false);
   const createTask = useCreateTask();
 
-  const clarifyEvent = events.find((e) => e.event === "needs_clarification");
-  const finalEvent = events.find((e) => e.event === "final");
+  const clarifyEvent = events.find((e) => e.event === 'needs_clarification');
+  const finalEvent = events.find((e) => e.event === 'final');
 
   useEffect(() => {
     if (open && taskId && !hasStartedRef.current) {
       hasStartedRef.current = true;
-      start("/api/agents/decompose", { taskId });
+      start('/api/agents/decompose', { taskId });
     }
     if (!open) {
       hasStartedRef.current = false;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAnswers({});
       setItems(null);
     }
@@ -58,13 +59,14 @@ export function DecomposeDialog({
   useEffect(() => {
     if (finalEvent) {
       const d = finalEvent.data as { items?: Subtask[]; raw?: string };
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (d.items) setItems(d.items);
     }
   }, [finalEvent]);
 
   const submitClarification = () => {
     if (!taskId) return;
-    start("/api/agents/decompose", { taskId, clarificationAnswers: answers });
+    start('/api/agents/decompose', { taskId, clarificationAnswers: answers });
   };
 
   const createAll = async () => {
@@ -72,16 +74,17 @@ export function DecomposeDialog({
     for (const it of items) {
       await createTask.mutateAsync({
         title: it.title,
-        description: it.description ?? "",
+        description: it.description ?? '',
         priority: it.priority,
-        status: "todo",
-        parentId: taskId,
+        status: 'todo',
+        parentId: taskId
       });
     }
     onOpenChange(false);
   };
 
-  const questions = (clarifyEvent?.data as { questions: string[] } | undefined)?.questions;
+  const questions = (clarifyEvent?.data as { questions: string[] } | undefined)
+    ?.questions;
 
   return (
     <Dialog
@@ -105,7 +108,7 @@ export function DecomposeDialog({
                 <div key={i}>
                   <Label className="text-xs">{q}</Label>
                   <Input
-                    value={answers[q] ?? ""}
+                    value={answers[q] ?? ''}
                     onChange={(e) =>
                       setAnswers((a) => ({ ...a, [q]: e.target.value }))
                     }
@@ -135,8 +138,8 @@ export function DecomposeDialog({
                     onChange={(e) =>
                       setItems((arr) =>
                         arr!.map((x, j) =>
-                          j === i ? { ...x, title: e.target.value } : x,
-                        ),
+                          j === i ? { ...x, title: e.target.value } : x
+                        )
                       )
                     }
                   />
@@ -145,8 +148,8 @@ export function DecomposeDialog({
                     onValueChange={(v) =>
                       setItems((arr) =>
                         arr!.map((x, j) =>
-                          j === i ? { ...x, priority: v as Priority } : x,
-                        ),
+                          j === i ? { ...x, priority: v as Priority } : x
+                        )
                       )
                     }
                   >
@@ -174,7 +177,13 @@ export function DecomposeDialog({
           )}
         </ScrollArea>
         <DialogFooter>
-          <Button variant="ghost" onClick={() => { cancel(); onOpenChange(false); }}>
+          <Button
+            variant="ghost"
+            onClick={() => {
+              cancel();
+              onOpenChange(false);
+            }}
+          >
             Cancel
           </Button>
           {items && (
@@ -182,7 +191,7 @@ export function DecomposeDialog({
               Create all
             </Button>
           )}
-          {status === "running" && (
+          {status === 'running' && (
             <p className="text-xs text-muted-foreground">Thinking…</p>
           )}
         </DialogFooter>

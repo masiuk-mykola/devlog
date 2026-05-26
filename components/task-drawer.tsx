@@ -25,7 +25,11 @@ export function TaskDrawer({ taskId, onClose }: { taskId: string | null; onClose
   const [decomposeOpen, setDecomposeOpen] = useState(false);
 
   useEffect(() => {
-    if (task) { setTitle(task.title); setDescription(task.description); }
+    if (task) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setTitle(task.title);
+      setDescription(task.description);
+    }
   }, [task]);
 
   const commit = (patch: Parameters<typeof update.mutate>[0]["body"]) => {
