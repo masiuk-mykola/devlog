@@ -2,6 +2,13 @@
 
 Honest log of how this project was built with Claude Code. Newest entry on top.
 
+## 2026-05-26 — Task 8: TanStack Query + hooks
+
+- `src/lib/api-client.ts` is a thin typed fetch wrapper around `/api/tasks` — single `request<T>` helper threads error messages out of the API's `{error:{message}}` envelope.
+- `app/providers.tsx` mounts the React Query client (10s staleTime, no refetchOnWindowFocus) — wired in `app/layout.tsx` around `{children}`.
+- `src/hooks/use-tasks.ts` exposes `useTasks`, `useTask`, `useCreateTask`, `useUpdateTask`, `useDeleteTask`, `useAddNote`. Mutations invalidate the `["tasks"]` cache + surface errors via Sonner toasts.
+- Note query key uses `["tasks","detail","none"]` when no id — keeps queryFn typed without conditional types.
+
 ## 2026-05-26 — Task 7: Seed script
 
 - `src/db/seed.ts` populates 6 realistic engineering tasks (flaky CI, refactor billing, postmortem, Node bump, dark mode, slow queries). Mix of statuses and priorities so the prioritizer + standup agents have something to chew on later.
