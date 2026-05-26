@@ -2,6 +2,13 @@
 
 Honest log of how this project was built with Claude Code. Newest entry on top.
 
+## 2026-05-26 — Task 10: Task drawer
+
+- `components/task-drawer.tsx` is now a side `Sheet` with: editable title/description (commit on blur), Status + Priority selects (commit on change), Subtasks checklist, Notes timeline + Add-note textarea, Decompose-with-AI button (opens placeholder dialog from Task 13), Delete with confirm.
+- `components/decompose-dialog.tsx` added as a placeholder dialog — replaced fully in Task 13. Keeps the drawer compilable in the meantime.
+- Confirmed compile + render 200 against the seeded DB.
+- No base-ui API adaptations needed for this task: `Sheet`/`SheetContent`/`SheetHeader`/`SheetTitle` and `Select`/`onValueChange` all matched the plan exactly. Task 9 already established the `render={}` pattern for `DialogTrigger`; the plan code for Task 10 does not use `asChild` at all so no substitutions were required.
+
 ## 2026-05-26 — Task 9: Task list UI
 
 - Main `app/page.tsx` is a server component shell with a `<TaskList>` client child handling state.
