@@ -2,6 +2,14 @@
 
 Honest log of how this project was built with Claude Code. Newest entry on top.
 
+## 2026-05-26 — Task 9: Task list UI
+
+- Main `app/page.tsx` is a server component shell with a `<TaskList>` client child handling state.
+- `components/task-list.tsx` owns the status tabs (All/Todo/In progress/Done), sort select (Priority/Newest/Oldest), and the open-drawer id. Skeleton + empty state covered.
+- `components/task-row.tsx` renders one row: priority badge, title (button to open), age, inline status `<Select>` that mutates via `useUpdateTask`.
+- `components/task-create-dialog.tsx` is a small modal form (title, description, priority) using `useCreateTask`. Uses Base UI's `render` prop on `DialogTrigger` (not `asChild`) since this shadcn setup uses `@base-ui/react/dialog`.
+- `components/task-drawer.tsx` is an intentional stub (`return null`) so the build stays green — replaced fully in Task 10.
+
 ## 2026-05-26 — Task 8: TanStack Query + hooks
 
 - `src/lib/api-client.ts` is a thin typed fetch wrapper around `/api/tasks` — single `request<T>` helper threads error messages out of the API's `{error:{message}}` envelope.
