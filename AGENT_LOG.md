@@ -2,6 +2,13 @@
 
 Honest log of how this project was built with Claude Code. Newest entry on top.
 
+## 2026-05-26 — Task 11: Anthropic client, SSE, runner (TDD)
+
+- `src/agents/runner.ts` is a hand-written tool-use loop on top of `@anthropic-ai/sdk` — NOT the SDK's `client.beta.messages.toolRunner`. Why: needed to short-circuit on "proposal" tools (`ask_clarification`, `propose_subtasks`) that surface their input to the client without continuing the LLM round. Wrote the test (3 cases: complete, proposal short-circuit, step cap) first; ran to confirm failure; implemented; all 3 pass + Task 5's 8 still green.
+- `src/lib/sse.ts` defines the event taxonomy used by the agent endpoints + the UI: `text_delta | tool_use | tool_result | needs_clarification | final | error | done`.
+- `src/agents/tools.ts`: `AgentTool<I>` type + `toAnthropicTool` adapter using zod v4's built-in `z.toJSONSchema`.
+- `src/lib/anthropic.ts` is the SDK singleton — throws `"ai_not_configured"` if `ANTHROPIC_API_KEY` is missing so route handlers can map to HTTP 503.
+
 ## 2026-05-26 — Task 10: Task drawer
 
 - `components/task-drawer.tsx` is now a side `Sheet` with: editable title/description (commit on blur), Status + Priority selects (commit on change), Subtasks checklist, Notes timeline + Add-note textarea, Decompose-with-AI button (opens placeholder dialog from Task 13), Delete with confirm.
