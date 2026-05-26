@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { PrioritizePanel } from "@/components/prioritize-panel";
+import { StandupPanel } from "@/components/standup-panel";
 import { TaskList } from "@/components/task-list";
 
 export default function Home() {
@@ -14,7 +15,7 @@ export default function Home() {
         </div>
         <div className="flex gap-2">
           <PrioritizePanel onPickTask={(id) => setOpenTaskId(id)} />
-          {/* StandupPanel mounts here in Task 14 */}
+          <StandupPanel />
         </div>
       </header>
       <TaskList externalOpenTaskId={openTaskId} onExternalClose={() => setOpenTaskId(null)} />
