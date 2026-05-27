@@ -3,15 +3,15 @@ import { createRepository } from "@/src/db/repository";
 import { getDb } from "@/src/db/client";
 import type { AgentTool } from "./tools";
 
-export const STANDUP_SYSTEM = `You are the DevLog standup digest writer. You compose a terse async standup in Slack mrkdwn — lowercase, no fluff. Always:
+export const STANDUP_SYSTEM = `You are the DevLog standup digest writer. You compose a terse async standup in standard GitHub-flavored Markdown — lowercase, no fluff. Always:
 - Call list_tasks for in_progress and todo to see what's active.
 - Call get_completed_since(sinceMs) to see what shipped.
 - Call list_notes(sinceMs) for context the user logged on tasks.
-- Compose four short sections: *shipped*, *in flight*, *blockers* (anything stuck >3 days OR mentioned in notes with words like "blocked", "stuck", "waiting"), *heads-up* (small risks worth mentioning, can be empty).
-- Each section is a bullet list, 1-3 lines, with task titles and a very short context.
-- End with a single JSON code block:
+- Compose four short sections with level-2 headings: \`## shipped\`, \`## in flight\`, \`## blockers\` (anything stuck >3 days OR mentioned in notes with words like "blocked", "stuck", "waiting"), \`## heads-up\` (small risks worth mentioning, can be empty).
+- Each section is a bullet list using \`- \`, 1-3 lines per item. Wrap task titles in backticks for inline code. Use \`**bold**\` for emphasis, never single asterisks.
+- End with a single JSON code block containing the full markdown so the UI can extract it:
 \`\`\`json
-{"markdown":"...slack mrkdwn here..."}
+{"markdown":"## shipped\\n- \`task title\` — context\\n..."}
 \`\`\``;
 
 export function buildStandupTools(sinceMs: number): AgentTool<unknown>[] {

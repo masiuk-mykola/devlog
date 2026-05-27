@@ -1,7 +1,7 @@
 "use client";
 import { Badge } from "@/components/ui/badge";
 import type { SseEvent } from "@/src/lib/sse";
-import { SlackMarkdown } from "./slack-markdown";
+import { Markdown } from "./markdown";
 
 const TOOL_LABELS: Record<string, string> = {
   list_tasks: "Reading your tasks…",
@@ -9,8 +9,10 @@ const TOOL_LABELS: Record<string, string> = {
   get_task: "Reading task details…",
   get_completed_since: "Looking at what shipped recently…",
   list_notes: "Reading recent notes…",
+  list_subtasks: "Reading subtasks…",
   ask_clarification: "Preparing clarifying questions…",
   propose_subtasks: "Drafting subtasks…",
+  propose_triage_actions: "Compiling triage actions…",
 };
 
 export function AgentTranscript({ events, hideText = false }: { events: SseEvent[]; hideText?: boolean }) {
@@ -21,7 +23,7 @@ export function AgentTranscript({ events, hideText = false }: { events: SseEvent
           if (hideText) return null;
           const cleaned = (e.data as { text: string }).text.replace(/```json[\s\S]*?(?:```|$)/g, "").trim();
           if (!cleaned) return null;
-          return <SlackMarkdown key={i} source={cleaned} />;
+          return <Markdown key={i} source={cleaned} />;
         }
         if (e.event === "tool_use") {
           const d = e.data as { name: string; input: unknown };

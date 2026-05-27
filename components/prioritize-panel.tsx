@@ -55,7 +55,7 @@ export function PrioritizePanel() {
               <ol className="mt-4 space-y-2">
                 {final.ranked.map((r) => (
                   <li key={r.taskId} className="rounded border border-border p-2 text-sm">
-                    <button onClick={() => openTask(r.taskId)} className="font-medium underline-offset-2 hover:underline">
+                    <button onClick={() => openTask(r.taskId)} className="text-left font-medium underline-offset-2 hover:underline">
                       {r.rank}. {r.title}
                     </button>
                     <p className="text-xs text-muted-foreground">{r.reason}</p>
