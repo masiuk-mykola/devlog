@@ -1,25 +1,42 @@
-"use client";
-import { useEffect, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { useCreateTask } from "@/src/hooks/use-tasks";
-import { PriorityEnum } from "@/src/schemas/task";
+'use client';
+import { useEffect, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { useCreateTask } from '@/src/hooks/use-tasks';
+import { PriorityEnum } from '@/src/schemas/task';
 
 const FormSchema = z.object({
-  title: z.string().trim().min(1, "Title is required").max(200, "Max 200 characters"),
+  title: z
+    .string()
+    .trim()
+    .min(1, 'Title is required')
+    .max(200, 'Max 200 characters'),
   description: z.string().max(2000),
-  priority: PriorityEnum,
+  priority: PriorityEnum
 });
 type FormValues = z.infer<typeof FormSchema>;
 
-const DEFAULTS: FormValues = { title: "", description: "", priority: "medium" };
+const DEFAULTS: FormValues = { title: '', description: '', priority: 'medium' };
 
 export function TaskCreateDialog() {
   const [open, setOpen] = useState(false);
@@ -27,11 +44,11 @@ export function TaskCreateDialog() {
   const form = useForm<FormValues>({
     resolver: zodResolver(FormSchema),
     defaultValues: DEFAULTS,
-    mode: "onSubmit",
+    mode: 'onSubmit'
   });
 
   const onSubmit = async (values: FormValues) => {
-    await create.mutateAsync({ ...values, status: "todo", parentId: null });
+    await create.mutateAsync({ ...values, status: 'todo', parentId: null });
     form.reset(DEFAULTS);
     setOpen(false);
   };
@@ -45,17 +62,17 @@ export function TaskCreateDialog() {
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key !== "n" && e.key !== "N") return;
+      if (e.key !== 'n' && e.key !== 'N') return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       const t = e.target as HTMLElement | null;
       if (!t) return;
       const tag = t.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA" || t.isContentEditable) return;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || t.isContentEditable) return;
       e.preventDefault();
       setOpen(true);
     };
-    document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
   }, []);
 
   return (
@@ -64,16 +81,31 @@ export function TaskCreateDialog() {
         + New task
       </DialogTrigger>
       <DialogContent>
-        <DialogHeader><DialogTitle>New task</DialogTitle></DialogHeader>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 py-2" noValidate>
+        <DialogHeader>
+          <DialogTitle>New task</DialogTitle>
+        </DialogHeader>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="space-y-5 py-2"
+          noValidate
+        >
           <div className="grid gap-2">
             <Label htmlFor="title">Title</Label>
-            <Input id="title" autoFocus aria-invalid={!!titleError} {...form.register("title")} />
-            {titleError && <p role="alert" className="text-xs text-destructive">{titleError}</p>}
+            <Input
+              id="title"
+              autoFocus
+              aria-invalid={!!titleError}
+              {...form.register('title')}
+            />
+            {titleError && (
+              <p role="alert" className="text-xs text-destructive">
+                {titleError}
+              </p>
+            )}
           </div>
           <div className="grid gap-2">
             <Label htmlFor="desc">Description</Label>
-            <Textarea id="desc" rows={4} {...form.register("description")} />
+            <Textarea id="desc" rows={4} {...form.register('description')} />
           </div>
           <div className="grid gap-2">
             <Label>Priority</Label>
@@ -83,7 +115,17 @@ export function TaskCreateDialog() {
               render={({ field }) => (
                 <Select value={field.value} onValueChange={field.onChange}>
                   <SelectTrigger>
-                    <SelectValue>{(v: string) => ({ low: "Low", medium: "Medium", high: "High" } as Record<string, string>)[v] ?? v}</SelectValue>
+                    <SelectValue>
+                      {(v: string) =>
+                        (
+                          ({
+                            low: 'Low',
+                            medium: 'Medium',
+                            high: 'High'
+                          }) as Record<string, string>
+                        )[v] ?? v
+                      }
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="low">Low</SelectItem>
@@ -95,8 +137,19 @@ export function TaskCreateDialog() {
             />
           </div>
           <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => handleOpenChange(false)}>Cancel</Button>
-            <Button type="submit" disabled={form.formState.isSubmitting || create.isPending}>Create</Button>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => handleOpenChange(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={form.formState.isSubmitting || create.isPending}
+            >
+              Create
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

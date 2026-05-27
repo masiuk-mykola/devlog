@@ -99,6 +99,15 @@ export function DecomposeDialog({
           )}
         </ScrollArea>
         <DialogFooter>
+          {status === 'running' && (
+            <p
+              className="me-auto flex items-center gap-2 text-xs text-muted-foreground"
+              aria-live="polite"
+            >
+              <span className="inline-block size-1.5 animate-pulse rounded-full bg-current" />
+              Thinking…
+            </p>
+          )}
           <Button
             variant="ghost"
             onClick={() => {
@@ -108,9 +117,6 @@ export function DecomposeDialog({
           >
             Cancel
           </Button>
-          {status === 'running' && (
-            <p className="text-xs text-muted-foreground">Thinking…</p>
-          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
