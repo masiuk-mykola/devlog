@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -25,12 +25,16 @@ export function DecomposeDialog({
   taskId: string | null;
 }) {
   const { events, status, start, cancel } = useAgentStream();
-  const [items, setItems] = useState<SubtaskInput[] | null>(null);
   const hasStartedRef = useRef(false);
   const createTask = useCreateTask();
 
   const clarifyEvent = events.find((e) => e.event === 'needs_clarification');
   const finalEvent = events.find((e) => e.event === 'final');
+
+  const items = useMemo<SubtaskInput[] | null>(() => {
+    const d = finalEvent?.data as { items?: SubtaskInput[] } | undefined;
+    return d?.items ?? null;
+  }, [finalEvent]);
 
   useEffect(() => {
     if (open && taskId && !hasStartedRef.current) {
@@ -39,18 +43,8 @@ export function DecomposeDialog({
     }
     if (!open) {
       hasStartedRef.current = false;
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setItems(null);
     }
   }, [open, taskId, start]);
-
-  useEffect(() => {
-    if (finalEvent) {
-      const d = finalEvent.data as { items?: SubtaskInput[]; raw?: string };
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (d.items) setItems(d.items);
-    }
-  }, [finalEvent]);
 
   const submitClarification = (answers: Record<string, string>) => {
     if (!taskId) return;

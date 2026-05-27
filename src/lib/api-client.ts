@@ -15,10 +15,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  listTasks: (params: { status?: string; sort?: string } = {}) => {
-    const q = new URLSearchParams(params as Record<string, string>).toString();
-    return request<Task[]>(`/api/tasks${q ? `?${q}` : ""}`);
-  },
+  listTasks: () => request<Task[]>(`/api/tasks`),
   getTask: (id: string) => request<TaskDetail>(`/api/tasks/${id}`),
   createTask: (body: CreateTaskInput) => request<Task>("/api/tasks", { method: "POST", body: JSON.stringify(body) }),
   updateTask: (id: string, body: UpdateTaskInput) =>
