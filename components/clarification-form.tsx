@@ -49,11 +49,12 @@ export function ClarificationForm({
       <p className="text-sm font-medium">A few clarifying questions:</p>
       {questions.map((q, i) => {
         const error = form.formState.errors.answers?.[i]?.answer?.message;
+        const inputId = `clarif-${i}`;
         return (
-          <div key={q} className="grid gap-1">
-            <Label className="text-xs">{q}</Label>
-            <Input aria-invalid={!!error} {...form.register(`answers.${i}.answer` as const)} />
-            {error && <p className="text-xs text-destructive">{error}</p>}
+          <div key={i} className="grid gap-1">
+            <Label htmlFor={inputId} className="text-xs">{q}</Label>
+            <Input id={inputId} aria-invalid={!!error} {...form.register(`answers.${i}.answer` as const)} />
+            {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
           </div>
         );
       })}

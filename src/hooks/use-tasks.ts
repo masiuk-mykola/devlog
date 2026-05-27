@@ -4,18 +4,16 @@ import { toast } from "sonner";
 import { api, type TaskDetail } from "@/src/lib/api-client";
 import type { CreateTaskInput, Task, UpdateTaskInput } from "@/src/schemas/task";
 
-const KEYS = {
-  list: (params: object) => ["tasks", "list", params] as const,
-  detail: (id: string) => ["tasks", "detail", id] as const,
-};
+const LIST_KEY = ["tasks", "list", "all"] as const;
+const detailKey = (id: string) => ["tasks", "detail", id] as const;
 
-export function useTasks(params: { status?: string; sort?: string } = {}) {
-  return useQuery<Task[]>({ queryKey: KEYS.list(params), queryFn: () => api.listTasks(params) });
+export function useTasks() {
+  return useQuery<Task[]>({ queryKey: LIST_KEY, queryFn: () => api.listTasks() });
 }
 
 export function useTask(id: string | null) {
   return useQuery<TaskDetail>({
-    queryKey: id ? KEYS.detail(id) : ["tasks", "detail", "none"],
+    queryKey: id ? detailKey(id) : ["tasks", "detail", "none"],
     queryFn: () => api.getTask(id!),
     enabled: !!id,
   });
@@ -33,24 +31,53 @@ export function useCreateTask() {
   });
 }
 
+type UpdateVars = { id: string; body: UpdateTaskInput };
+type UpdateContext = { prevList?: Task[]; prevDetail?: TaskDetail };
+
 export function useUpdateTask() {
   const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, body }: { id: string; body: UpdateTaskInput }) => api.updateTask(id, body),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
-    onError: (e: Error) => toast.error(e.message),
+  return useMutation<Task, Error, UpdateVars, UpdateContext>({
+    mutationFn: ({ id, body }) => api.updateTask(id, body),
+    onMutate: async ({ id, body }) => {
+      await qc.cancelQueries({ queryKey: ["tasks"] });
+      const prevList = qc.getQueryData<Task[]>(LIST_KEY);
+      const prevDetail = qc.getQueryData<TaskDetail>(detailKey(id));
+      const nowIso = new Date().toISOString();
+      const patch = (t: Task): Task => ({ ...t, ...body, updatedAt: nowIso });
+      qc.setQueryData<Task[]>(LIST_KEY, (old) => old?.map((t) => (t.id === id ? patch(t) : t)));
+      if (prevDetail) {
+        qc.setQueryData<TaskDetail>(detailKey(id), { ...prevDetail, ...body, updatedAt: nowIso });
+      }
+      return { prevList, prevDetail };
+    },
+    onError: (e, { id }, ctx) => {
+      if (ctx?.prevList) qc.setQueryData<Task[]>(LIST_KEY, ctx.prevList);
+      if (ctx?.prevDetail) qc.setQueryData<TaskDetail>(detailKey(id), ctx.prevDetail);
+      toast.error(e.message);
+    },
+    onSettled: (_d, _e, { id }) => {
+      qc.invalidateQueries({ queryKey: LIST_KEY });
+      qc.invalidateQueries({ queryKey: detailKey(id) });
+    },
   });
 }
 
 export function useDeleteTask() {
   const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) => api.deleteTask(id),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["tasks"] });
-      toast.success("Task deleted");
+  return useMutation<{ ok: true }, Error, string, { prevList?: Task[] }>({
+    mutationFn: (id) => api.deleteTask(id),
+    onMutate: async (id) => {
+      await qc.cancelQueries({ queryKey: LIST_KEY });
+      const prevList = qc.getQueryData<Task[]>(LIST_KEY);
+      qc.setQueryData<Task[]>(LIST_KEY, (old) => old?.filter((t) => t.id !== id));
+      return { prevList };
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e, _id, ctx) => {
+      if (ctx?.prevList) qc.setQueryData<Task[]>(LIST_KEY, ctx.prevList);
+      toast.error(e.message);
+    },
+    onSuccess: () => toast.success("Task deleted"),
+    onSettled: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
   });
 }
 
@@ -58,7 +85,7 @@ export function useAddNote() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, body }: { id: string; body: string }) => api.addNote(id, body),
-    onSuccess: (_d, vars) => qc.invalidateQueries({ queryKey: KEYS.detail(vars.id) }),
+    onSuccess: (_d, vars) => qc.invalidateQueries({ queryKey: detailKey(vars.id) }),
     onError: (e: Error) => toast.error(e.message),
   });
 }

@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { useAgentStream } from "@/src/hooks/use-agent-stream";
 import { AgentTranscript } from "./agent-transcript";
+import { SlackMarkdown } from "./slack-markdown";
 
 export function StandupPanel() {
   const [open, setOpen] = useState(false);
@@ -14,7 +15,15 @@ export function StandupPanel() {
   const { events, status, start, cancel } = useAgentStream();
   const final = events.find((e) => e.event === "final")?.data as { markdown?: string } | undefined;
 
-  const launch = (h: number) => { setSinceHours(h); setOpen(true); start("/api/agents/standup", { sinceHours: h }); };
+  const run = (h: number) => {
+    setSinceHours(h);
+    start("/api/agents/standup", { sinceHours: h });
+  };
+
+  const launch = (h: number) => {
+    setOpen(true);
+    run(h);
+  };
 
   const copy = () => {
     if (!final?.markdown) return;
@@ -32,7 +41,7 @@ export function StandupPanel() {
             <DialogTitle>Standup digest</DialogTitle>
             <div className="flex items-center gap-2 pt-2">
               <span className="text-xs text-muted-foreground">Since:</span>
-              <Select value={String(sinceHours)} onValueChange={(v) => launch(Number(v))}>
+              <Select value={String(sinceHours)} onValueChange={(v) => run(Number(v))}>
                 <SelectTrigger className="h-8 w-[120px]">
                   <SelectValue>{(v: string) => ({ "24": "24h", "72": "3 days", "168": "7 days" } as Record<string, string>)[v] ?? v}</SelectValue>
                 </SelectTrigger>
@@ -45,14 +54,17 @@ export function StandupPanel() {
             </div>
           </DialogHeader>
           <ScrollArea className="max-h-[60vh]">
-            <AgentTranscript events={events} />
+            <AgentTranscript events={events} hideText />
             {final?.markdown && (
-              <pre className="mt-4 whitespace-pre-wrap rounded border border-border bg-muted/30 p-3 text-sm">
-                {final.markdown}
-              </pre>
+              <div className="mt-4 rounded border border-border bg-muted/30 p-3">
+                <SlackMarkdown source={final.markdown} />
+              </div>
             )}
           </ScrollArea>
           <DialogFooter>
+            {status !== "running" && final?.markdown && (
+              <Button variant="ghost" onClick={() => run(sinceHours)}>Rerun</Button>
+            )}
             {final?.markdown && <Button onClick={copy}>Copy</Button>}
             {status === "running" && <p className="text-xs text-muted-foreground">Thinking…</p>}
           </DialogFooter>

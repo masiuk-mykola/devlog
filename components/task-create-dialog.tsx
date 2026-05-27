@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -43,9 +43,24 @@ export function TaskCreateDialog() {
 
   const titleError = form.formState.errors.title?.message;
 
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== "n" && e.key !== "N") return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const t = e.target as HTMLElement | null;
+      if (!t) return;
+      const tag = t.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || t.isContentEditable) return;
+      e.preventDefault();
+      setOpen(true);
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, []);
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger render={<Button size="sm" />}>
+      <DialogTrigger render={<Button size="sm" title="New task (N)" />}>
         + New task
       </DialogTrigger>
       <DialogContent>
@@ -54,7 +69,7 @@ export function TaskCreateDialog() {
           <div className="grid gap-2">
             <Label htmlFor="title">Title</Label>
             <Input id="title" autoFocus aria-invalid={!!titleError} {...form.register("title")} />
-            {titleError && <p className="text-xs text-destructive">{titleError}</p>}
+            {titleError && <p role="alert" className="text-xs text-destructive">{titleError}</p>}
           </div>
           <div className="grid gap-2">
             <Label htmlFor="desc">Description</Label>

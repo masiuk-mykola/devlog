@@ -52,8 +52,12 @@ export function SubtaskEditForm({
             className="grid grid-cols-[1fr_120px_auto] items-start gap-2 rounded border p-2"
           >
             <div className="grid gap-1">
-              <Input aria-invalid={!!titleError} {...form.register(`items.${i}.title` as const)} />
-              {titleError && <p className="text-xs text-destructive">{titleError}</p>}
+              <Input
+                aria-label={`Subtask ${i + 1} title`}
+                aria-invalid={!!titleError}
+                {...form.register(`items.${i}.title` as const)}
+              />
+              {titleError && <p role="alert" className="text-xs text-destructive">{titleError}</p>}
             </div>
             <Controller
               control={form.control}

@@ -2,6 +2,52 @@
 
 Honest log of how this project was built with Claude Code. Newest entry on top.
 
+## Note — UI improvements batch (15 items) verified live with Playwright
+
+After the RHF refactor and the a11y/`set-state-in-effect` cleanup, I went through 15 targeted UI improvements in one batch — no mobile responsiveness work, deliberately scoped to desktop-first polish. Everything was driven and verified through the **Playwright MCP** (`mcp__plugin_playwright_playwright__browser_*`) in a real browser against the running dev server, not just typecheck/tests.
+
+**What changed (grouped):**
+
+- **List header & filters** — task counts on status tabs (`All 7 / Todo 4 / In progress 2 / Done 1`); search input with `/` keyboard hint; sort + status + search + open-task all live in URL state via `useSearchParams` (`?status=todo&sort=priority&q=foo&open=<id>`); reload preserves state, links are shareable. `useTasks()` consolidated to one fetch-all query; filter/sort/counts derived client-side.
+- **Optimistic mutations** — `useUpdateTask` and `useDeleteTask` patch the list and detail caches in `onMutate`, snapshot for rollback in `onError`, invalidate in `onSettled`. Clicking the status select per row now updates the row and tab counts instantly with no perceptible request lag.
+- **Task row polish** — stale dot (amber 8×8) for `in_progress` tasks older than 72h via new `isStale()` in `src/lib/time.ts`; `Done` rows muted (transparent bg + `opacity-60`) instead of vibrant emerald; `line-through` scoped to the title button only (no more bleed onto the SelectTrigger).
+- **Drawer rewrite** — title + description now run through react-hook-form with an explicit **Save** button, an "Unsaved changes" / "All changes saved" microcopy line, and `disabled` gating on `!isDirty || isPending`. Status + priority remain instant-commit selects. Manual `+ Add subtask` inline form added (was only AI-decomposer before). Notes timestamps switched to `relativeTime()` (extracted from `task-row.tsx` into `src/lib/time.ts`).
+- **Delete confirmation** — replaced the native `confirm()` with a shadcn `Dialog` showing the task title in the message ("This permanently removes "X" and all its subtasks and notes"). Optimistic delete from list + rollback on error.
+- **Agent transcript** — replaced raw `tool: list_tasks` + JSON dumps with user-facing bullets: `• Reading your tasks…`, `• Checking task age…`, `• Looking at what shipped recently…`. JSON kept inside `<details>` but collapsed and de-emphasised. `tool_result` events suppressed entirely from the transcript view since the matching `tool_use` bullet covers them.
+- **Standup digest** — new `<SlackMarkdown>` renderer (`components/slack-markdown.tsx`, ~40 lines, no extra deps) that handles `*bold*`, `_italic_`, `` `code` ``, and `- ` bullets line-by-line. The agent's Slack mrkdwn output now shows as actual structured markup (bold section headers, code chips, bulleted lists), not a `<pre>` plain-text dump.
+- **Panel UX** — `Prioritize my day` promoted to `default` (primary) variant; `Draft standup` stays `outline`. Both agent panels gained a **Rerun** button visible once the run completes. `PrioritizePanel` now navigates to `?open=<id>` directly instead of needing `onPickTask` prop drilling from `app/page.tsx`.
+- **Keyboard** — `N` opens the New-task dialog (self-listening inside `TaskCreateDialog`, skips when focus is in any input/textarea/contentEditable). `/` focuses the search input (`TaskList` listens). Both have visible affordances (`title="New task (N)"` on the button, `Search…  /` placeholder).
+
+**Verified flows in Playwright** (browser-driven, snapshot-based, against real dev server):
+
+1. Search input fills with "flaky" → URL becomes `?q=flaky` → list collapses to one row (`Investigate flaky CI on PR-checks workflow`).
+2. Press `N` from a focused body → New-task dialog opens with title input auto-focused.
+3. Click a task title → drawer opens, URL becomes `?open=gPfjTBxNxL`, Save button is `[disabled]` with "All changes saved" microcopy. Edit title → microcopy switches to "Unsaved changes", Save activates. Click Save → returns to disabled/"All changes saved". 
+4. Click Delete task → AlertDialog opens with the task title interpolated into the body. Cancel closes the dialog.
+5. Change status select on a `Todo` row to `In progress` → tab counts flip from `Todo 4 / In progress 2` to `Todo 3 / In progress 3` instantly (optimistic), no spinner.
+6. Click Prioritize my day → modal opens, transcript bullets stream (`• Reading your tasks…`, `• Checking task age…` twice for two stuck tasks), final markdown renders, Rerun button appears.
+7. Click Draft standup → transcript streams, final block renders as structured Slack mrkdwn (bold `*blockers*` headers, inline `code` chips, `<ul>` bullets), Rerun + Copy buttons present.
+
+**What didn't get tested in browser** (not because flaky — because data didn't allow):
+
+- Stale amber dot: seed tasks are all 19h old, threshold is 72h. Code path covered by unit logic (`isStale` is just `Date.now() - parsed > 72*3600000`), behaviour will fire when data ages.
+- Notes relative time: seed contains zero notes. `relativeTime` is the same helper that's been in `task-row.tsx` for weeks; just relocated and reused.
+
+**Verification commands run between batches:**
+
+- `npm run typecheck` — clean throughout.
+- `npm run test` — 11/11 passing (8 repository + 3 runner); no test changes needed since UI work didn't touch DB or agent runner.
+- `npm run build` — clean, after wrapping `PrioritizePanel` in `<Suspense>` (it now reads `useSearchParams()` to construct `?open=` links). Build catches Suspense-boundary issues that `tsc` cannot.
+- `npx eslint <changed paths>` — clean.
+
+**What I deliberately did not do:**
+
+- **Mobile responsiveness** — explicitly out of scope per the user request for this pass. Header buttons + filter row + task rows likely overflow at <420px and would need a separate iteration.
+- **`AlertDialog` as a shadcn primitive** — used a regular `Dialog` with explicit destructive button styling. Adding a dedicated `AlertDialog` component would be cleaner but is one more file for the same visual outcome.
+- **Debounce on the search input** — every keystroke writes to URL and triggers a render. The data is in-memory and small (single-user); 50 tasks at 60 wpm is nothing. Premature optimisation.
+- **Search highlighting** — match the substring inside the row. Nice-to-have, not load-bearing for the feature.
+- **Standup markdown as a real lib** (`react-markdown` etc.) — Slack mrkdwn is its own dialect (`*bold*` not `**bold**`, no headings, no tables). Pulling a CommonMark renderer would be wrong syntax and ~30 KB; a 40-line custom parser fits the actual output shape exactly.
+
 ## Note — Code review after the RHF refactor
 
 Ran `/code-review` against the uncommitted diff (font swap, status-based row colors, equal-width priority chip column, Select label render-fn fix, RHF migration of three forms, three new form components). Result: **0 CRITICAL, 0 HIGH, 4 MEDIUM, 2 LOW** — nothing blocking.

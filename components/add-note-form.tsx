@@ -34,7 +34,7 @@ export function AddNoteForm({ taskId }: { taskId: string }) {
           Add
         </Button>
       </div>
-      {bodyError && <p className="text-xs text-destructive">{bodyError}</p>}
+      {bodyError && <p role="alert" className="text-xs text-destructive">{bodyError}</p>}
     </form>
   );
 }
