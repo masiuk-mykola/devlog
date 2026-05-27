@@ -36,7 +36,9 @@ export function TaskList({
         </Tabs>
         <div className="flex items-center gap-2">
           <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
-            <SelectTrigger className="h-9 w-[140px]"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="h-9 w-[140px]">
+              <SelectValue>{(v: string) => ({ priority: "Priority", newest: "Newest", oldest: "Oldest" } as Record<string, string>)[v] ?? v}</SelectValue>
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="priority">Priority</SelectItem>
               <SelectItem value="newest">Newest</SelectItem>

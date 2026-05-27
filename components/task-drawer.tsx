@@ -9,19 +9,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
-import { useAddNote, useDeleteTask, useTask, useUpdateTask } from "@/src/hooks/use-tasks";
+import { useDeleteTask, useTask, useUpdateTask } from "@/src/hooks/use-tasks";
 import type { Priority, Status } from "@/src/schemas/task";
+import { AddNoteForm } from "./add-note-form";
 import { DecomposeDialog } from "./decompose-dialog";
 
 export function TaskDrawer({ taskId, onClose }: { taskId: string | null; onClose: () => void }) {
   const { data: task } = useTask(taskId);
   const update = useUpdateTask();
   const del = useDeleteTask();
-  const addNote = useAddNote();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [noteBody, setNoteBody] = useState("");
   const [decomposeOpen, setDecomposeOpen] = useState(false);
 
   useEffect(() => {
@@ -58,7 +57,9 @@ export function TaskDrawer({ taskId, onClose }: { taskId: string | null; onClose
                 <div>
                   <Label>Status</Label>
                   <Select value={task.status} onValueChange={(v) => commit({ status: v as Status })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger>
+                      <SelectValue>{(v: string) => ({ todo: "Todo", in_progress: "In progress", done: "Done" } as Record<string, string>)[v] ?? v}</SelectValue>
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="todo">Todo</SelectItem>
                       <SelectItem value="in_progress">In progress</SelectItem>
@@ -69,7 +70,9 @@ export function TaskDrawer({ taskId, onClose }: { taskId: string | null; onClose
                 <div>
                   <Label>Priority</Label>
                   <Select value={task.priority} onValueChange={(v) => commit({ priority: v as Priority })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger>
+                      <SelectValue>{(v: string) => ({ low: "Low", medium: "Medium", high: "High" } as Record<string, string>)[v] ?? v}</SelectValue>
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="low">Low</SelectItem>
                       <SelectItem value="medium">Medium</SelectItem>
@@ -123,20 +126,7 @@ export function TaskDrawer({ taskId, onClose }: { taskId: string | null; onClose
                     </li>
                   ))}
                 </ul>
-                <div className="mt-2 flex gap-2">
-                  <Textarea value={noteBody} onChange={(e) => setNoteBody(e.target.value)} rows={2} placeholder="Add a note…" />
-                  <Button
-                    size="sm"
-                    disabled={!noteBody.trim()}
-                    onClick={async () => {
-                      if (!taskId) return;
-                      await addNote.mutateAsync({ id: taskId, body: noteBody.trim() });
-                      setNoteBody("");
-                    }}
-                  >
-                    Add
-                  </Button>
-                </div>
+                {taskId && <AddNoteForm taskId={taskId} />}
               </div>
 
               <Separator />

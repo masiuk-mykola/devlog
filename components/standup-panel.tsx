@@ -33,7 +33,9 @@ export function StandupPanel() {
             <div className="flex items-center gap-2 pt-2">
               <span className="text-xs text-muted-foreground">Since:</span>
               <Select value={String(sinceHours)} onValueChange={(v) => launch(Number(v))}>
-                <SelectTrigger className="h-8 w-[120px]"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="h-8 w-[120px]">
+                  <SelectValue>{(v: string) => ({ "24": "24h", "72": "3 days", "168": "7 days" } as Record<string, string>)[v] ?? v}</SelectValue>
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="24">24h</SelectItem>
                   <SelectItem value="72">3 days</SelectItem>
