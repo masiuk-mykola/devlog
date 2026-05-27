@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -72,7 +71,7 @@ function TaskDrawerBody({ task, onClose }: { task: TaskDetail; onClose: () => vo
 
   return (
     <>
-      <ScrollArea className="flex-1 px-4">
+      <div className="flex-1 overflow-y-auto px-4">
         <form onSubmit={form.handleSubmit(onSave)} className="space-y-4 py-4" noValidate>
           <div>
             <Label htmlFor="t-title">Title</Label>
@@ -196,7 +195,7 @@ function TaskDrawerBody({ task, onClose }: { task: TaskDetail; onClose: () => vo
             Delete task
           </Button>
         </div>
-      </ScrollArea>
+      </div>
 
       <Dialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
         <DialogContent>

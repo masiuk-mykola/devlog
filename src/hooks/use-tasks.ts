@@ -55,9 +55,8 @@ export function useUpdateTask() {
       if (ctx?.prevDetail) qc.setQueryData<TaskDetail>(detailKey(id), ctx.prevDetail);
       toast.error(e.message);
     },
-    onSettled: (_d, _e, { id }) => {
-      qc.invalidateQueries({ queryKey: LIST_KEY });
-      qc.invalidateQueries({ queryKey: detailKey(id) });
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ["tasks"] });
     },
   });
 }
