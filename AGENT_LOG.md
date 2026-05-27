@@ -2,6 +2,14 @@
 
 Honest log of how this project was built with Claude Code. Newest entry on top.
 
+## Task 15 — Backlog Triage Agent (own idea)
+
+Had a task to add one more agent of my own choosing. Thought about a few options (similar-task detector, resume briefing, DoD check) and went with a **Backlog Triage** agent — scans the whole backlog and flags unhealthy tasks (stuck, ghost, exploded, almost_done, orphan_progress) with a concrete suggested action per item.
+
+Built it, then verified live in Playwright: triage button → dialog → transcript streams ~19 tool calls (list_tasks → get_task_age + list_subtasks + list_notes in parallel → propose_triage_actions) → action cards render → clicking "Decompose" navigates to the task drawer. Works end-to-end.
+
+Files: `src/agents/triage.ts`, `app/api/agents/triage/route.ts`, `components/triage-panel.tsx`, `components/triage-action-card.tsx`. Typecheck / build / eslint / tests all clean.
+
 ## Note — UI improvements batch (15 items) verified live with Playwright
 
 After the RHF refactor and the a11y/`set-state-in-effect` cleanup, I went through 15 targeted UI improvements in one batch — no mobile responsiveness work, deliberately scoped to desktop-first polish. Everything was driven and verified through the **Playwright MCP** (`mcp__plugin_playwright_playwright__browser_*`) in a real browser against the running dev server, not just typecheck/tests.

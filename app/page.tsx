@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { PrioritizePanel } from "@/components/prioritize-panel";
 import { StandupPanel } from "@/components/standup-panel";
+import { TriagePanel } from "@/components/triage-panel";
 import { TaskList } from "@/components/task-list";
 
 export default function Home() {
@@ -15,6 +16,7 @@ export default function Home() {
           <div className="flex gap-2">
             <PrioritizePanel />
             <StandupPanel />
+            <TriagePanel />
           </div>
         </Suspense>
       </header>

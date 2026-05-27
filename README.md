@@ -6,7 +6,7 @@ Single-user task tracker with embedded AI agents that remove the friction of "wh
 
 ```bash
 npm install
-cp .env.example .env       # add your ANTHROPIC_API_KEY
+cp .env.local              # add your ANTHROPIC_API_KEY
 npm run seed               # populates ~6 sample tasks (optional but recommended)
 npm run dev
 ```
@@ -34,6 +34,7 @@ components/           UI (drawer, list, agent panels, transcript)
 ## Storage choice and limits
 
 SQLite via `better-sqlite3` was chosen for: zero-config, file-based persistence; synchronous API that keeps Route Handlers simple; real querying for filter+sort+joins on subtasks/notes. Limits:
+
 - Single-process only (no app server clustering). Fine for one-user scope.
 - No migration tool — schema bootstraps on demand. A real product would use `drizzle-kit` or similar.
 - DB file lives at `./data/devlog.db` — gitignored, recreated by `npm run seed`.

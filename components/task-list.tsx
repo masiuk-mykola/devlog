@@ -70,12 +70,10 @@ export function TaskList() {
   );
 
   const counts = useMemo(() => {
-    const byStatus: Record<Task['status'], number> = {
-      todo: 0,
-      in_progress: 0,
-      done: 0
-    };
-    for (const task of topLevel) byStatus[task.status]++;
+    const byStatus = topLevel.reduce<Record<Task['status'], number>>(
+      (acc, task) => ({ ...acc, [task.status]: acc[task.status] + 1 }),
+      { todo: 0, in_progress: 0, done: 0 }
+    );
     return { all: topLevel.length, ...byStatus };
   }, [topLevel]);
 

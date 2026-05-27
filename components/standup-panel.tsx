@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { useAgentStream } from "@/src/hooks/use-agent-stream";
 import { AgentTranscript } from "./agent-transcript";
-import { SlackMarkdown } from "./slack-markdown";
+import { Markdown } from "./markdown";
 
 export function StandupPanel() {
   const [open, setOpen] = useState(false);
@@ -57,7 +57,7 @@ export function StandupPanel() {
             <AgentTranscript events={events} hideText />
             {final?.markdown && (
               <div className="mt-4 rounded border border-border bg-muted/30 p-3">
-                <SlackMarkdown source={final.markdown} />
+                <Markdown source={final.markdown} />
               </div>
             )}
           </ScrollArea>
