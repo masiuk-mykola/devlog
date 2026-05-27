@@ -2,6 +2,66 @@
 
 Honest log of how this project was built with Claude Code. Newest entry on top.
 
+## Note — Code review after the RHF refactor
+
+Ran `/code-review` against the uncommitted diff (font swap, status-based row colors, equal-width priority chip column, Select label render-fn fix, RHF migration of three forms, three new form components). Result: **0 CRITICAL, 0 HIGH, 4 MEDIUM, 2 LOW** — nothing blocking.
+
+**MEDIUM findings (worth fixing before commit):**
+
+1. `task-row.tsx` — `[&_button]:line-through` is too broad: it also strikes through the Base UI `SelectTrigger` (which is rendered as a `<button>`), so the "Done" dropdown label appears struck out. Move `line-through` onto the title button directly.
+2. `clarification-form.tsx` — `<Label>` has no `htmlFor`, `<Input>` has no `id`. Clicking the question label does not focus the input. Bind them with a stable id (`clarif-${i}`).
+3. `subtask-edit-form.tsx` — title `<Input>` has no associated label at all. Screen readers hear "edit, text" with no semantic. Add `aria-label="Subtask N title"`.
+4. All four forms (`task-create-dialog`, `clarification-form`, `subtask-edit-form`, `add-note-form`) — error `<p>` elements lack `role="alert"`/`aria-live`, so validation failures aren't announced. Mark each error paragraph as a live region.
+
+**LOW findings:**
+
+5. `clarification-form.tsx` — `key={q}` would collide if the agent ever returned two identical questions. Switch to `key={i}` (positional, never reorders within one render).
+6. `subtask-edit-form.tsx` / `clarification-form.tsx` — `useEffect(() => form.reset({...}), [initialItems])` would wipe in-progress edits if a parent ever passed a freshly-constructed array each render. Current parent (`decompose-dialog`) only assigns from a final agent event, so the reference is stable — but the contract is fragile. Document or shallow-compare before resetting.
+
+**Other categories — clean:** no hardcoded secrets, no SQL/XSS surface, no `dangerouslySetInnerHTML`, no path traversal; all forms validate at the boundary via Zod; no `console.log`, no `any`, no TODOs/FIXMEs; functions all <50 LOC; files all <100 LOC; no `eslint-disable` rules added by this diff.
+
+**No new tests added** for the form components — consistent with the documented stance in the reflection section ("no UI tests"). The validation logic itself is covered by the Zod schemas, which are unit-testable in isolation if/when component tests come in.
+
+## Note — TaskCreateDialog: from ad-hoc useState to RHF + Zod
+
+The "New task" dialog originally wasn't a form at all. It was three `useState` hooks (`title`, `description`, `priority`), a free-floating `<div>` of inputs, and an `onClick={submit}` handler that did `if (!title.trim()) return;` as the only validation. No `<form>` element, no submit semantics, no field-level errors, no schema — just a small modal that happened to call a mutation. At three fields it worked, but it was already accumulating subtle problems: Enter-to-submit didn't work (no form), the empty-title check was silent (nothing told the user *why* the button did nothing), and the validation rules drifted from the API's Zod schema since the UI didn't reference it.
+
+We refactored it to **react-hook-form + @hookform/resolvers + zod**:
+
+- A `FormSchema` derived from the existing `PriorityEnum` defines the UI-side contract with real error messages ("Title is required", "Max 200 characters", "Max 2000 characters" for description).
+- `useForm({ resolver: zodResolver(FormSchema) })` replaces three `useState` calls. `form.register(...)` wires native inputs; a `<Controller>` wraps the Base UI `<Select>` because it's a controlled component (this also silences the React Compiler warning about `form.watch()` being non-memoizable).
+- The markup is now a real `<form onSubmit={form.handleSubmit(onSubmit)}>` — Enter submits, the browser treats it as a form, `noValidate` keeps the styling consistent with our error UI.
+- Errors render under each field with `aria-invalid` on the input. The submit button disables itself while `form.formState.isSubmitting || create.isPending` — closing one race where double-clicking could fire two mutations.
+- `form.reset(DEFAULTS)` runs on both successful submit and dialog close, so reopening always shows a clean form.
+
+**Why this is better now**
+
+- One source of truth for shape and rules — the schema. Adding `dueDate` later is one new line in `FormSchema`, one new field, one new register call. No drift between "what the form lets you submit" and "what the API accepts".
+- Real, accessible error UX — screen readers see `aria-invalid`, sighted users see the message under the bad field, instead of a button that silently does nothing.
+- Submit is now uncontrolled per-field — fewer re-renders on every keystroke, which matters once the dialog has 6–10 fields.
+- The `<form>` element earns us Enter-to-submit, browser autofill semantics, and `formState.isSubmitting` to gate the button without an extra `isLoading` ref.
+
+**Why this matters as the project grows**
+
+- The next forms (edit-task panel, settings, the decompose-confirmation flow) can lift the same pattern: a UI schema next to the component, `zodResolver`, `<Controller>` for any non-native input. No bespoke `useState` soup per form.
+- Cross-field validation (e.g., "due date must be after start date", "if priority is high, description required") becomes a `.refine(...)` on the schema rather than imperative checks scattered through handlers.
+- Server-side errors can be surfaced into the form via `form.setError("title", { message })` — once we wire `useCreateTask`'s rejection to that, the same field-level UI handles both client and server failures, instead of leaning on a toast for everything.
+- Async validation (e.g., a uniqueness check) plugs in via the resolver without restructuring the component.
+- Testing is easier: the schema is unit-testable in isolation; the form's reset/submit behaviour is observable via `form.formState` without poking at internal `useState`.
+
+The cost was two small deps (~30 KB combined, tree-shakeable) and a 30-line component growing to ~80 lines. Worth it before the third form lands and we'd be tempted to copy-paste the useState pattern.
+
+## Note — Why no axios
+
+The HTTP client in `src/lib/api-client.ts` is plain `fetch`. axios was deliberately not added:
+
+- **Same-origin Next.js** — frontend and API live on the same host (`/api/tasks/...`). No CORS, no baseURL, no auth headers to inject — none of the usual reasons to reach for axios apply.
+- **Native `fetch` in React 19 / Next 16** — first-class, integrates with the Next cache, no polyfill needed. Adding axios would mean ~13 KB of bundle for zero new capability.
+- **React Query owns the rest** — retry, dedup, caching, mutations, invalidation all live at the TanStack Query layer, not the HTTP client. Axios interceptors would have nowhere meaningful to plug in.
+- **A 10-line `request<T>()` helper** (`api-client.ts:5-15`) already covers JSON serialization, typed responses, and unwrapping the `{error:{message}}` envelope — that's the whole "wrapper" axios would otherwise provide.
+
+axios would be the right call if this project had multiple API domains with different baseURLs/auth, complex interceptor chains (refresh-token flows, tracing), upload-progress requirements, or a legacy-browser target. None of those apply here.
+
 ## 2026-05-26 — Task 14: Standup digest + final polish
 
 - `src/agents/standup.ts` defines three tools (`list_tasks`, `list_notes`, `get_completed_since`) + `STANDUP_SYSTEM` + `extractMarkdown` JSON-block parser.

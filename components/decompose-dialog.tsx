@@ -8,22 +8,12 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
 import { useAgentStream } from '@/src/hooks/use-agent-stream';
 import { useCreateTask } from '@/src/hooks/use-tasks';
-import type { Priority } from '@/src/schemas/task';
 import { AgentTranscript } from './agent-transcript';
-
-type Subtask = { title: string; description?: string; priority: Priority };
+import { ClarificationForm } from './clarification-form';
+import { SubtaskEditForm, type SubtaskInput } from './subtask-edit-form';
 
 export function DecomposeDialog({
   open,
@@ -35,8 +25,7 @@ export function DecomposeDialog({
   taskId: string | null;
 }) {
   const { events, status, start, cancel } = useAgentStream();
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [items, setItems] = useState<Subtask[] | null>(null);
+  const [items, setItems] = useState<SubtaskInput[] | null>(null);
   const hasStartedRef = useRef(false);
   const createTask = useCreateTask();
 
@@ -51,27 +40,26 @@ export function DecomposeDialog({
     if (!open) {
       hasStartedRef.current = false;
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setAnswers({});
       setItems(null);
     }
   }, [open, taskId, start]);
 
   useEffect(() => {
     if (finalEvent) {
-      const d = finalEvent.data as { items?: Subtask[]; raw?: string };
+      const d = finalEvent.data as { items?: SubtaskInput[]; raw?: string };
       // eslint-disable-next-line react-hooks/set-state-in-effect
       if (d.items) setItems(d.items);
     }
   }, [finalEvent]);
 
-  const submitClarification = () => {
+  const submitClarification = (answers: Record<string, string>) => {
     if (!taskId) return;
     start('/api/agents/decompose', { taskId, clarificationAnswers: answers });
   };
 
-  const createAll = async () => {
-    if (!taskId || !items) return;
-    for (const it of items) {
+  const createAll = async (validated: SubtaskInput[]) => {
+    if (!taskId) return;
+    for (const it of validated) {
       await createTask.mutateAsync({
         title: it.title,
         description: it.description ?? '',
@@ -83,8 +71,7 @@ export function DecomposeDialog({
     onOpenChange(false);
   };
 
-  const questions = (clarifyEvent?.data as { questions: string[] } | undefined)
-    ?.questions;
+  const questions = (clarifyEvent?.data as { questions: string[] } | undefined)?.questions;
 
   return (
     <Dialog
@@ -102,78 +89,19 @@ export function DecomposeDialog({
           <AgentTranscript events={events} />
 
           {questions && !items && (
-            <div className="mt-4 space-y-3 rounded border border-amber-500/40 bg-amber-500/5 p-3">
-              <p className="text-sm font-medium">A few clarifying questions:</p>
-              {questions.map((q, i) => (
-                <div key={i}>
-                  <Label className="text-xs">{q}</Label>
-                  <Input
-                    value={answers[q] ?? ''}
-                    onChange={(e) =>
-                      setAnswers((a) => ({ ...a, [q]: e.target.value }))
-                    }
-                  />
-                </div>
-              ))}
-              <Button
-                size="sm"
-                onClick={submitClarification}
-                disabled={Object.values(answers).every((v) => !v.trim())}
-              >
-                Send answers
-              </Button>
-            </div>
+            <ClarificationForm
+              questions={questions}
+              onSubmit={submitClarification}
+              isPending={status === 'running'}
+            />
           )}
 
           {items && (
-            <div className="mt-4 space-y-2">
-              <p className="text-sm font-medium">Proposed subtasks:</p>
-              {items.map((it, i) => (
-                <div
-                  key={i}
-                  className="grid grid-cols-[1fr_120px_auto] items-center gap-2 rounded border p-2"
-                >
-                  <Input
-                    value={it.title}
-                    onChange={(e) =>
-                      setItems((arr) =>
-                        arr!.map((x, j) =>
-                          j === i ? { ...x, title: e.target.value } : x
-                        )
-                      )
-                    }
-                  />
-                  <Select
-                    value={it.priority}
-                    onValueChange={(v) =>
-                      setItems((arr) =>
-                        arr!.map((x, j) =>
-                          j === i ? { ...x, priority: v as Priority } : x
-                        )
-                      )
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="low">Low</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() =>
-                      setItems((arr) => arr!.filter((_, j) => j !== i))
-                    }
-                  >
-                    x
-                  </Button>
-                </div>
-              ))}
-            </div>
+            <SubtaskEditForm
+              initialItems={items}
+              onCreate={createAll}
+              isPending={createTask.isPending}
+            />
           )}
         </ScrollArea>
         <DialogFooter>
@@ -186,11 +114,6 @@ export function DecomposeDialog({
           >
             Cancel
           </Button>
-          {items && (
-            <Button onClick={createAll} disabled={items.length === 0}>
-              Create all
-            </Button>
-          )}
           {status === 'running' && (
             <p className="text-xs text-muted-foreground">Thinking…</p>
           )}
